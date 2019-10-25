@@ -101,52 +101,6 @@ int main(){
        }
 
 
-/*
-int insert(nodePtrPtr header, char name[100]){
-
-  nodePtr newNode, temp, prev;
-
-  // create node to insert and assign values to its fields
-  newNode=(nodePtr)malloc(sizeof(node));
-  strcpy(newNode->word, name);
-  newNode->next=NULL;
-
-  // if LL empty
-  if (*header == NULL){
-    *header=newNode;
-    //newNode->next = NULL;
-  } 
-  // if LL not empty
-  else {
-    temp=*header;
-    while (temp != NULL && temp->word[0] < newNode->word[0]) {
-      prev=temp;
-      temp=temp->next;
-    }
-
-    if (temp!=NULL && strcmp(temp->word, newNode->word) == 0 ) {
-      printf(" This word exists "); 
-      return 0;
-    }
-
-    // insert node in a sorted fashion
-    if (temp!=NULL)
-      newNode->next=temp;
-
-    // if value to insert is the least in LL then have header point to node
-    if (temp==*header)
-      *header=newNode;
-    // otherwise insert node in correct position
-    else 
-      prev->next=newNode;
-  }
-  
-  return 1;
-  
-}  */
-
-
-
 
   void insert(ListNodePtr *sPtr, char value[])
 { 
