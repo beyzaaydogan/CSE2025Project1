@@ -3,50 +3,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+//#include <locale.h>
 
 
-// self-referential structure                       
+struct firstOrderNode;     
+
 struct listNode {                                      
-   char word[80]; // each listNode contains a character 
-   struct listNode *nextPtr; // pointer to next node
-   struct listNode *firstPtr; 
-   struct listNode *secondPtr;
-   struct listNode *thirdPtr; 
+    char word[80];  
+    struct listNode *nextPtr; 
+    struct firstOrderNode *firstPtr; 
+    struct listNode *secondPtr;
+    struct listNode *thirdPtr; 
    
 }; 
+
+struct firstOrderNode {
+    struct firstOrderNode *nextPtr;
+    struct listNode *firstOrderPtr;
+};
 
 
 typedef struct listNode ListNode; // synonym for struct listNode
 typedef ListNode * ListNodePtr; // synonym for ListNode*
 
-// prototypes
+typedef struct firstOrderNode FirstOrderNode; // synonym for struct firstOrderNode 
+typedef FirstOrderNode * FirstOrderNodePtr; // synonym for FirstOrderNode *
+
+
+
 void insert(ListNodePtr *sPtr, char value[]);
 int isEmpty(ListNodePtr sPtr);
-void printList(ListNodePtr currentPtr);
-void insertTofirstOrder(ListNodePtr *sPtr, char value[]);
-
+void printMasterList(ListNodePtr currentPtr);
+void createFirstOrder(ListNodePtr *sPtr, FILE *file);
+ListNodePtr searchInFile(ListNodePtr wordPtr, char wordInFile[]);
 
 int main(){
-
+       // setlocale(LC_CTYPE, "tr_TR.UTF-8");
         ListNodePtr startPtr = NULL; // initially there are no nodes
         struct dirent **namelist;
         struct dirent **namelistSub;
-        FILE    *inputTxtFile;
+        FILE *inputTxtFile;
         int numOfSubDirs, numOfSubFiles, j, i ;
 
         numOfSubDirs = scandir("./dataset", &namelist, NULL, alphasort); // . yerine /home/beyza/C-workspace/2025Projects gelebilir
+        char path[100] ="./dataset/"; 
          
         if (numOfSubDirs < 0)
             perror("scandir");
          
         else {
 
-            char path[100] ="./dataset/"; 
-            printf("number of sub directories are %d\n", numOfSubDirs);
+            printf(" Number of sub directories are %d\n", numOfSubDirs);
             printf("%s\n", namelist[0]->d_name );
             printf("%s\n", namelist[1]->d_name );
             printf("%s\n", namelist[2]->d_name );
@@ -68,7 +78,7 @@ int main(){
                       strcat(filePath, "/"); 
                       strcat(filePath, namelistSub[j]->d_name); 
                       printf("Filepath is --> %s\n\n\n\n", filePath );
-                      inputTxtFile = fopen(filePath, "r");
+                      inputTxtFile = fopen(filePath, "r"); //ccs=UTF-8");
                       if (inputTxtFile == NULL) { 
                           printf("Cannot open file \n"); 
                           exit(0); 
@@ -82,7 +92,6 @@ int main(){
                         //puts("word is ----> ");
                         //puts(word);
                         insert(&startPtr, word); // insert item in list
-                        printList(startPtr);
                         ++count;
                         }
                      
@@ -94,8 +103,54 @@ int main(){
 
 
                  }                 
+                        printMasterList(startPtr);
 
          }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         for( i = 2 ; i < numOfSubDirs ; i++){
+                  char dirPath[100], filePath[100];  
+                  strcpy(dirPath, path);
+                  strcat(dirPath , namelist[i]->d_name );
+                  numOfSubFiles = scandir(dirPath, &namelistSub, NULL, alphasort);
+                 
+
+                  for(j = 2 ; j < numOfSubFiles ; j++){
+
+                    
+                      strcpy(filePath, dirPath);
+                      strcat(filePath, "/"); 
+                      strcat(filePath, namelistSub[j]->d_name); 
+                      inputTxtFile = fopen(filePath, "r"); //ccs=UTF-8");
+                      if (inputTxtFile == NULL) { 
+                          printf("Cannot open file \n"); 
+                          exit(0); 
+                      } 
+                      
+                      createFirstOrder(&startPtr, inputTxtFile);
+
+                      fclose(inputTxtFile); 
+
+                   }
+                 
+                 }                 
+                       
+          // printf("startPtr is %s\n",startPtr->word);
+          // printf("firstOrderPtr is %s\n", startPtr->firstPtr->firstOrderPtr->word);
+
+
 
         
          return 1;
@@ -103,89 +158,81 @@ int main(){
 
 
 
-  void insert(ListNodePtr *sPtr, char value[])
-{ 
-   ListNodePtr newPtr = malloc(sizeof(ListNode)); // create node
 
-   if (newPtr != NULL) { // is space available
-    // size_t destination_size = sizeof (array2);
-      strncpy(newPtr->word, value, 80);
-      newPtr->word[80 - 1] = '\0';
+  void insert(ListNodePtr *sPtr, char value[]){
 
-      //newPtr->word = value; // place value in node
-      newPtr->nextPtr = NULL; // node does not link to another node
+      ListNodePtr newPtr = malloc(sizeof(ListNode)); // create node
 
-      ListNodePtr previousPtr = NULL;
-      ListNodePtr currentPtr = *sPtr;
+      if (newPtr != NULL) { // is space available
+            //size_t destination_size = sizeof (array2);
+            strncpy(newPtr->word, value, 80);
+            newPtr->word[80 - 1] = '\0';
 
-      while(currentPtr != NULL){
-        if(strcmp(currentPtr->word, value) == 0){
-           return;
-        }
-        currentPtr = currentPtr->nextPtr;
-      }
+            //newPtr->word = value; // place value in node
+            newPtr->nextPtr = NULL; // node does not link to another node
 
-      currentPtr = *sPtr;
+            ListNodePtr previousPtr = NULL;
+            ListNodePtr currentPtr = *sPtr;
 
-      // loop to find the correct location in the list       
-      while (currentPtr != NULL && (int)value[0] > (int)currentPtr->word[0]) {
-         previousPtr = currentPtr; // walk to ...               
-         currentPtr = currentPtr->nextPtr; // ... next node 
-      }                                          
+            while(currentPtr != NULL){
+                
+                if(strcmp(currentPtr->word, value) == 0){//checking if the word we want to instert exists
+                    return;
+                }
+                currentPtr = currentPtr->nextPtr;
+            }
 
-      // insert new node at beginning of list
-      if (previousPtr == NULL) { 
-         newPtr->nextPtr = *sPtr;
-         *sPtr = newPtr;
+            currentPtr = *sPtr;
+
+            // loop to find the correct location in the list       
+            while (currentPtr != NULL && (int)value[0] > (int)currentPtr->word[0]) {
+                
+                previousPtr = currentPtr; // walk to ...               
+                currentPtr = currentPtr->nextPtr; // ... next node 
+            }                                          
+
+            // insert new node at beginning of list
+            if (previousPtr == NULL) { 
+                newPtr->nextPtr = *sPtr;
+                *sPtr = newPtr;
+            } 
+            
+            else { // insert new node between previousPtr and currentPtr
+                previousPtr->nextPtr = newPtr;
+                newPtr->nextPtr = currentPtr;
+            } 
       } 
-      else { // insert new node between previousPtr and currentPtr
-         previousPtr->nextPtr = newPtr;
-         newPtr->nextPtr = currentPtr;
+      
+      else {
+          printf("%s not inserted. No memory available.\n", value);
       } 
-   } 
-   else {
-      printf("%s not inserted. No memory available.\n", value);
-   } 
 }      
    
 
 
 
 
-  void insertTofirstOrder(ListNodePtr *sPtr, char value[]){ 
-      ListNodePtr newPtr = malloc(sizeof(ListNode)); // create node
+  void createFirstOrder(ListNodePtr *sPtr, FILE *file){ 
+      
+      char word[40];
+      fscanf(file, "%s", &word[0]);
+      ListNodePtr wordInTxt = searchInFile(*sPtr, word);
+      FirstOrderNodePtr tmp = malloc(sizeof(FirstOrderNode));
+      fscanf(file, "%s", &word[0]);
+      tmp->firstOrderPtr = searchInFile(*sPtr, word);
+      //tmp->nextPtr = NULL;
+      wordInTxt->firstPtr = tmp;
+      
+      while( fscanf(file,"%s", &word[0]) == 1 && wordInTxt->firstPtr != NULL){
+        FirstOrderNodePtr tmp = malloc(sizeof(FirstOrderNode));
+        tmp->firstOrderPtr = searchInFile(*sPtr, word);
+        wordInTxt->firstPtr= tmp;
+        wordInTxt->firstPtr = wordInTxt->firstPtr->nextPtr;
+        
+      }
 
-   
-   if (newPtr != NULL) { // is space available
-    // size_t destination_size = sizeof (array2);
-      strncpy(newPtr->word, value, 80);
-      newPtr->word[80 - 1] = '\0';
+      printf("%s\n", );
 
-      //newPtr->word = value; // place value in node
-      newPtr->nextPtr = NULL; // node does not link to another node
-
-      ListNodePtr previousPtr = NULL;
-      ListNodePtr currentPtr = *sPtr;
-
-      // loop to find the correct location in the list       
-      while (currentPtr != NULL && (int)value[0] > (int)currentPtr->word[0]) {
-         previousPtr = currentPtr; // walk to ...               
-         currentPtr = currentPtr->nextPtr; // ... next node 
-      }                                          
-
-      // insert new node at beginning of list
-      if (previousPtr == NULL) { 
-         newPtr->nextPtr = *sPtr;
-         *sPtr = newPtr;
-      } 
-      else { // insert new node between previousPtr and currentPtr
-         previousPtr->nextPtr = newPtr;
-         newPtr->nextPtr = currentPtr;
-      } 
-   } 
-   else {
-      printf("%s not inserted. No memory available.\n", value);
-   } 
 }      
    
 
@@ -203,7 +250,8 @@ int isEmpty(ListNodePtr sPtr){
 } 
 
 
-void printList(ListNodePtr currentPtr){ 
+
+void printMasterList(ListNodePtr currentPtr){ 
    // if list is empty
    if (isEmpty(currentPtr)) {
       puts("List is empty.\n");
@@ -221,3 +269,38 @@ void printList(ListNodePtr currentPtr){
       puts("NULL\n");
    } 
 } 
+
+
+void printFirstOrder(ListNodePtr wPtr){
+
+    if (isEmpty(currentPtr)) {
+      puts("List is empty.\n");
+    } 
+    else { 
+      while(wPtr->firstPtr != NULL){
+       // printf("{%s}\n", );
+      }
+
+
+
+}
+
+
+
+
+
+ListNodePtr searchInFile(ListNodePtr wordPtr, char wordInFile[] ){//(File * file, ListNodePtr wordPtr){// burada verdiğimiz kelimenin Master LinkedListteki yerini buluyoruz. 
+
+      while(wordPtr != NULL){
+        if(strcmp(wordInFile, wordPtr->word) == 0 ){
+          printf(" \n Word in file is : %s", wordInFile);
+          return wordPtr;
+        }else{
+          wordPtr = wordPtr->nextPtr;
+        }
+    
+
+
+     }
+
+}
