@@ -7,6 +7,7 @@
 #include <errno.h>
 
 
+struct orderNode;
 
 struct listNode {                                      
 	char word[80];  
@@ -33,8 +34,8 @@ struct connectionNode {
 	struct connectionNode *nextPtr;
 };
 
-typedef connectionNode ConnectionNode;
-typedef ConnectionNode* ConnectionNodePtr;
+typedef struct connectionNode ConnectionNode;
+typedef ConnectionNode * ConnectionNodePtr;
 
 
 
@@ -43,11 +44,16 @@ typedef ConnectionNode* ConnectionNodePtr;
 void insert(ListNodePtr *sPtr, char value[]);
 int isEmpty(ListNodePtr sPtr);
 void printMasterList(ListNodePtr currentPtr);
+ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree);
+ConnectionNodePtr insertConnections(ConnectionNodePtr headOfConnection, ConnectionNodePtr connectionNode);
+ListNodePtr putOrderNodeIntoListNode(ListNodePtr wordNode, OrderNodePtr orderNode);
+void printConnections(ConnectionNodePtr headOfConnection, int orderDegree);
 
 int main(){
 
 	ListNodePtr headPtr = NULL; 
 	ConnectionNodePtr headOfConnections = NULL;
+
 	struct dirent **namelist;
 	struct dirent **namelistSub;
 	FILE *inputTxtFile;
@@ -99,7 +105,9 @@ int main(){
 
 }
 
-
+	headOfConnections = makeConnectionsOfOrders(headOfConnections, headPtr, headPtr->nextPtr, 1);
+	headOfConnections = makeConnectionsOfOrders(headOfConnections, headPtr->nextPtr->nextPtr, headPtr->nextPtr->nextPtr->nextPtr, 1);
+	printConnections(headOfConnections, 1);
 
 
 
@@ -185,7 +193,7 @@ void printMasterList(ListNodePtr currentPtr){
 
 
 
-void makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree) {
+ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree) {
 
 	OrderNodePtr orderNode1 = (OrderNodePtr)malloc(sizeof(OrderNode)); 
 	OrderNodePtr orderNode2 = (OrderNodePtr)malloc(sizeof(OrderNode)); 
@@ -199,55 +207,60 @@ void makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr wo
 	connectionNode->word2 = orderNode2;
 	connectionNode->orderDegree = orderDegree;
 
-	putOrderNodeIntoListNode(word1, orderNode1);
-	putOrderNodeIntoListNode(word2, orderNode2);
-
-	insertConnections(headOfConnections, connectionNode);
 
 
+	word1 = putOrderNodeIntoListNode(word1, orderNode1);
+	word2 = putOrderNodeIntoListNode(word2, orderNode2);
 
+	headOfConnections = insertConnections(headOfConnections, connectionNode);
+	//printf("{%s,%s}, ", headOfConnections->word1->wordPtr->word, headOfConnections->word2->wordPtr->word);
+
+	return headOfConnections;
 }
 
-void insertConnections(ConnectionNodePtr headOfConnection, ConnectionNodePtr connectionNode) {
+ConnectionNodePtr insertConnections(ConnectionNodePtr headOfConnections, ConnectionNodePtr connectionNode) {
 
-	if(headOfConnection == NULL){
-		headOfConnection = connectionNode;
-		return;
+
+	if(headOfConnections == NULL){
+		headOfConnections = connectionNode;
+		//printf("{%s,%s}, ", headOfConnections->word1->wordPtr->word, headOfConnections->word2->wordPtr->word);
+		return headOfConnections;
 	}
-	ConnectionNodePtr tmp = headOfConnection;	
+	ConnectionNodePtr tmp = headOfConnections;	
 	while(tmp->nextPtr != NULL) {
 		tmp = tmp->nextPtr;
 	}
 	tmp->nextPtr = connectionNode;
-
-
+		
+	return headOfConnections;
 }
 
 
-void putOrderNodeIntoListNode(ListNodePtr wordNode, OrderNodePtr orderNode) {
+ListNodePtr putOrderNodeIntoListNode(ListNodePtr wordNode, OrderNodePtr orderNode) {
 
 	if(wordNode->orderPtr == NULL) {
-		wordPtr->orderPtr = orderNode;
-		return;
+		wordNode->orderPtr = orderNode;
+		return wordNode;
 	}
-	OrderNodePtr tmp = wordPtr->orderPtr;
+	OrderNodePtr tmp = wordNode->orderPtr;
 	while(tmp->nextPtr != NULL){
 		tmp = tmp->nextPtr;
 	}
 	tmp->nextPtr = orderNode;
-
+	return wordNode;
 }
 
 
 
-void printConnections(ConnectionNodePtr headOfConnection, int orderDegree) {
-	ConnectionNodePtr tmp = headOfConnection;
+void printConnections(ConnectionNodePtr headOfConnections, int orderDegree) {
+	ConnectionNodePtr tmp = headOfConnections;
+	
 	while(tmp != NULL) {
 		if(tmp->orderDegree == orderDegree) {
-			printf("{%s,%s}\n", tmp->word1->wordPtr->word,  );
+			printf("{%s,%s}, ", tmp->word1->wordPtr->word, tmp->word2->wordPtr->word);
 
 		}
-
+		tmp = tmp->nextPtr;
 
 	}
 
