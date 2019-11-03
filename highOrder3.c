@@ -8,6 +8,7 @@
 
 
 struct orderNode;
+struct connectionNode;
 
 struct listNode {                                      
 	char word[80];  
@@ -22,6 +23,8 @@ struct orderNode {
 	ListNodePtr wordPtr;
 	struct orderNode *nextPtr;
 	struct orderNode *connectionPtr;
+	struct connectionNode *bond; 
+
 };
 
 typedef struct orderNode OrderNode;
@@ -60,6 +63,8 @@ WordNodePtr createFileLinkedList(WordNodePtr headOfWordNodePtr, char path[]);
 WordNodePtr insertWordNodeToFileLinkedList(WordNodePtr headOfWordNodePtr, WordNodePtr wordNode);
 ConnectionNodePtr createFirstOrder(ListNodePtr headOfMLL, WordNodePtr headOfFLL, ConnectionNodePtr headOfConnections);
 WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL);
+ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
+ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
 
 int main(){
 
@@ -131,6 +136,17 @@ int main(){
 	printConnections(headOfConnections, 1);
 	printf("\n");
 
+	headOfConnections = createSecondOrder(headPtr, headOfConnections);
+	printf("\n");
+	printf("2 nd -order term co-occurrence: " );
+	printConnections(headOfConnections, 2);
+	printf("\n");
+
+	headOfConnections = createThirdOrder(headPtr, headOfConnections);
+	printf("\n");
+	printf("3 rd -order term co-occurrence: " );
+	printConnections(headOfConnections, 3);
+	printf("\n");
 
 
 
@@ -218,13 +234,14 @@ void printMasterList(ListNodePtr currentPtr){
 
 ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree) {
 	if(word1 != NULL && word2 != NULL){
+		if(word1 == word2)//aynı iki kelimeyi bağlama
+			return headOfConnections;
 
 		ConnectionNodePtr tmp = headOfConnections;
 		while(tmp != NULL) {
 
-			if((strcmp(tmp->word1->wordPtr->word, word1->word) == 0 && strcmp(tmp->word2->wordPtr->word, word2->word) == 0 && tmp->orderDegree == orderDegree) || 
-				(strcmp(tmp->word1->wordPtr->word, word2->word) == 0 && strcmp(tmp->word2->wordPtr->word, word1->word) == 0 && tmp->orderDegree == orderDegree)) {
-
+			if((strcmp(tmp->word1->wordPtr->word, word1->word) == 0 && strcmp(tmp->word2->wordPtr->word, word2->word) == 0 ) ||//&& tmp->orderDegree == orderDegree) || 
+				(strcmp(tmp->word1->wordPtr->word, word2->word) == 0 && strcmp(tmp->word2->wordPtr->word, word1->word) == 0 )) {//&& tmp->orderDegree == orderDegree)) {// burdaki orderDegree checkleri eğer iki kelimenin orderlerı aynı ise connectiona eklemememizi sağlıyor aynı iki kelime hem second hem first ise de yazdırılacak. 
 				return headOfConnections;
 		}
 
@@ -247,6 +264,8 @@ ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, L
 	connectionNode->word2 = orderNode2;
 	connectionNode->nextPtr = NULL;
 	connectionNode->orderDegree = orderDegree;
+	orderNode1->bond = connectionNode;
+	orderNode2->bond = connectionNode;
 
 	headOfConnections = insertConnections(headOfConnections, connectionNode);
 	
@@ -399,4 +418,69 @@ WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL) {
 	}
 	return tmp;
 
+}
+
+
+
+
+ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections) {
+
+	ListNodePtr tmp = headOfMLL;
+
+	while(tmp != NULL) {
+		OrderNodePtr tmpOrderNode = tmp->orderPtr;
+		while(tmpOrderNode != NULL) {
+			if(tmpOrderNode->bond->orderDegree == 1) {
+				OrderNodePtr tmp2OrderNode = tmpOrderNode->connectionPtr->wordPtr->orderPtr;
+				while(tmp2OrderNode != NULL) {
+					if(tmp2OrderNode->bond->orderDegree == 1) {
+
+						headOfConnections = makeConnectionsOfOrders(headOfConnections, tmp, tmp2OrderNode->connectionPtr->wordPtr, 2);
+
+					}
+					tmp2OrderNode = tmp2OrderNode->nextPtr;
+
+				}
+
+
+			}
+			tmpOrderNode = tmpOrderNode->nextPtr;
+		}
+
+		tmp = tmp->nextPtr;
+	}
+
+	return headOfConnections;
+}
+
+
+
+ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections) {
+
+	ListNodePtr tmp = headOfMLL;
+
+	while(tmp != NULL) {
+		OrderNodePtr tmpOrderNode = tmp->orderPtr;
+		while(tmpOrderNode != NULL) {
+			if(tmpOrderNode->bond->orderDegree == 2) {
+				OrderNodePtr tmp2OrderNode = tmpOrderNode->connectionPtr->wordPtr->orderPtr;
+				while(tmp2OrderNode != NULL) {
+					if(tmp2OrderNode->bond->orderDegree == 1) {
+
+						headOfConnections = makeConnectionsOfOrders(headOfConnections, tmp, tmp2OrderNode->connectionPtr->wordPtr, 3);
+
+					}
+					tmp2OrderNode = tmp2OrderNode->nextPtr;
+
+				}
+
+
+			}
+			tmpOrderNode = tmpOrderNode->nextPtr;
+		}
+
+		tmp = tmp->nextPtr;
+	}
+
+	return headOfConnections;
 }
