@@ -96,61 +96,45 @@ int main(){
     			strcat(filePath, "/"); 
     			strcat(filePath, namelistSub[j]->d_name); 
     		//	printf("Filepath is --> %s\n\n\n\n", filePath );
-				inputTxtFile = fopen(filePath, "r"); 
-				if (inputTxtFile == NULL) { 
-					printf("Cannot open file \n"); 
-					exit(0); 
-				} 
+    			inputTxtFile = fopen(filePath, "r"); 
+    			if (inputTxtFile == NULL) { 
+    				printf("Cannot open file \n"); 
+    				exit(0); 
+    			} 
 
 
-				char word[40];
-				while( fscanf(inputTxtFile,"%s", &word[0]) == 1 ){
-				insert(&headPtr, word); // insert item in list
+    			char word[40];
+    			while( fscanf(inputTxtFile,"%s", &word[0]) == 1 ){
+					insert(&headPtr, word); // insert item in list
 				}
 
 
-			headOfWordNodePtr = createFileLinkedList(headOfWordNodePtr, filePath);	
-			if(headOfWordNodePtr == NULL) {
-				printf("null 1 \n");
-			}
-			headOfConnections = createFirstOrder(headPtr, headOfWordNodePtr, headOfConnections);
-			if(headOfConnections == NULL) {
-				printf("null 2 \n");
-			}
-			printConnections(headOfConnections, 1);
-			headOfWordNodePtr = clearFileLinkedList(headOfWordNodePtr);
-			if(headOfWordNodePtr == NULL) {
-				printf("null oldu \n");
-			}
-			fclose(inputTxtFile); 
+				headOfWordNodePtr = createFileLinkedList(headOfWordNodePtr, filePath);	
+			
+				headOfConnections = createFirstOrder(headPtr, headOfWordNodePtr, headOfConnections);
+			
+			
+				headOfWordNodePtr = clearFileLinkedList(headOfWordNodePtr);
+			
+				fclose(inputTxtFile); 
 
 			}
 
 
-		}                 
-		//printMasterList(headPtr);
+		}
+		printf("Master Linked List: ");                 
+		printMasterList(headPtr);
+		printf("\n");
 
 	}
-
-	/*ListNodePtr exPtr1 = NULL; 
-	ConnectionNodePtr ex1ConnHead = NULL;
-	insert(&exPtr1, "beyza");
-	insert(&exPtr1, "bilge");
-	insert(&exPtr1, "ali");
-	ex1ConnHead = makeConnectionsOfOrders(ex1ConnHead, exPtr1, exPtr1->nextPtr, 1);
-	ex1ConnHead = makeConnectionsOfOrders(ex1ConnHead, exPtr1, exPtr1->nextPtr, 1);
-	ex1ConnHead = makeConnectionsOfOrders(ex1ConnHead, exPtr1, exPtr1->nextPtr, 1);
-	printConnections(ex1ConnHead, 1);*/
-
-/*
-	headOfConnections = makeConnectionsOfOrders(headOfConnections, headPtr, headPtr->nextPtr, 1);
-	headOfConnections = makeConnectionsOfOrders(headOfConnections, headPtr, headPtr->nextPtr, 1);
-	headOfConnections = makeConnectionsOfOrders(headOfConnections, headPtr->nextPtr->nextPtr, headPtr->nextPtr->nextPtr->nextPtr, 1);*/
+	printf("1 st -order term co-occurrence: " );
+	printConnections(headOfConnections, 1);
+	printf("\n");
 
 
 
 
-return 0;
+	return 0;
 }
 
 
@@ -217,7 +201,7 @@ void printMasterList(ListNodePtr currentPtr){
 		puts("List is empty.\n");
 	} 
 	else { 
-		puts("The list is:");
+		//puts("The list is:");
 
       // while not the end of the list
 		while (currentPtr != NULL) { 
@@ -233,13 +217,15 @@ void printMasterList(ListNodePtr currentPtr){
 
 
 ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree) {
+	if(word1 != NULL && word2 != NULL){
 
-	ConnectionNodePtr tmp = headOfConnections;
-	while(tmp != NULL) {
+		ConnectionNodePtr tmp = headOfConnections;
+		while(tmp != NULL) {
 
-		if((strcmp(tmp->word1->wordPtr->word, word1->word) == 0 && strcmp(tmp->word2->wordPtr->word, word2->word) == 0) || 
-			(strcmp(tmp->word1->wordPtr->word, word2->word) == 0 && strcmp(tmp->word2->wordPtr->word, word1->word) == 0)) {
-			return headOfConnections;
+			if((strcmp(tmp->word1->wordPtr->word, word1->word) == 0 && strcmp(tmp->word2->wordPtr->word, word2->word) == 0 && tmp->orderDegree == orderDegree) || 
+				(strcmp(tmp->word1->wordPtr->word, word2->word) == 0 && strcmp(tmp->word2->wordPtr->word, word1->word) == 0 && tmp->orderDegree == orderDegree)) {
+
+				return headOfConnections;
 		}
 
 		tmp = tmp->nextPtr; 
@@ -251,27 +237,32 @@ ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, L
 	OrderNodePtr orderNode2 = (OrderNodePtr)malloc(sizeof(OrderNode)); 
 	orderNode1->wordPtr = word1;
 	orderNode2->wordPtr = word2;
+	orderNode1->nextPtr = NULL;
+	orderNode2->nextPtr = NULL;
 	orderNode1->connectionPtr = orderNode2;
 	orderNode2->connectionPtr = orderNode1;
 
 	ConnectionNodePtr connectionNode = (ConnectionNodePtr)malloc(sizeof(ConnectionNode));
 	connectionNode->word1 = orderNode1;
 	connectionNode->word2 = orderNode2;
+	connectionNode->nextPtr = NULL;
 	connectionNode->orderDegree = orderDegree;
 
 	headOfConnections = insertConnections(headOfConnections, connectionNode);
+	
 	word1 = putOrderNodeIntoListNode(word1, orderNode1);
 	word2 = putOrderNodeIntoListNode(word2, orderNode2);
 
 	
-	return headOfConnections;
+}
+return headOfConnections;
 
 }
 
 ConnectionNodePtr insertConnections(ConnectionNodePtr headOfConnections, ConnectionNodePtr connectionNode) {
 	if(headOfConnections == NULL) {
 		headOfConnections = connectionNode;
-			return headOfConnections;
+		return headOfConnections;
 	}
 	
 	ConnectionNodePtr tmp = headOfConnections;
@@ -321,29 +312,28 @@ void printConnections(ConnectionNodePtr headOfConnections, int orderDegree) {
 
 ListNodePtr getNodeFromMLL(ListNodePtr headOfMLL, char wordInFile[] ) { 
 
-    ListNodePtr tmp = headOfMLL;
-    while(tmp != NULL) {
-        if(strcmp(wordInFile, tmp -> word) == 0 ) {
-            printf(" \n Word in file is : %s", wordInFile);
-            return tmp;
-        }
-        tmp = tmp -> nextPtr;
-    }
-    return NULL;
+	ListNodePtr tmp = headOfMLL;
+	while(tmp != NULL) {
+		if(strcmp(wordInFile, tmp -> word) == 0 ) {
+            //printf(" \n Word in file is : %s", wordInFile);
+			return tmp;
+		}
+		tmp = tmp -> nextPtr;
+	}
+	return NULL;
 }
 
 
 
 WordNodePtr createFileLinkedList(WordNodePtr headOfWordNodePtr, char path[]) {
 	FILE *file;
-	printf("in createFLL\n");
-	WordNodePtr newWordNode = (WordNodePtr)malloc(sizeof(WordNode));
 	file = fopen(path, "r");
 	char word[40];
 	while( fscanf(file,"%s", &word[0]) == 1 ) {
+		WordNodePtr newWordNode = (WordNodePtr)malloc(sizeof(WordNode));
 		strcpy(newWordNode->word, word);
+		newWordNode->nextWordNodePtr = NULL;
 		headOfWordNodePtr = insertWordNodeToFileLinkedList(headOfWordNodePtr, newWordNode); 
-		printf("after insert\n");
 	}
 	fclose(file);
 	return headOfWordNodePtr;
@@ -352,30 +342,24 @@ WordNodePtr createFileLinkedList(WordNodePtr headOfWordNodePtr, char path[]) {
 
 
 WordNodePtr insertWordNodeToFileLinkedList(WordNodePtr headOfWordNodePtr, WordNodePtr wordNode) {
-	printf("in insert\n");
-	if(headOfWordNodePtr = NULL) {
-		printf("in if\n");
+	if(headOfWordNodePtr == NULL) {
 		headOfWordNodePtr = wordNode;
 		return headOfWordNodePtr;
 	}
 	WordNodePtr tmp = headOfWordNodePtr;
 	while(tmp != NULL) {//check if the word exists
-		printf("in while\n");
 		if(strcmp(tmp->word, wordNode->word) == 0){
-			printf("in sec if\n");
 			return headOfWordNodePtr;
 		}
 		tmp = tmp->nextWordNodePtr;
 	}
 
-	while(headOfWordNodePtr->nextWordNodePtr != NULL ) {
-		printf("in third if \n");
-		headOfWordNodePtr = headOfWordNodePtr->nextWordNodePtr;
+	tmp = headOfWordNodePtr;
+	while(tmp->nextWordNodePtr != NULL ) {
+		tmp = tmp->nextWordNodePtr;
 
 	}
-	printf("before equals\n");
-	headOfWordNodePtr->nextWordNodePtr = wordNode;
-
+	tmp->nextWordNodePtr = wordNode;
 	return headOfWordNodePtr;
 
 }
@@ -383,21 +367,21 @@ WordNodePtr insertWordNodeToFileLinkedList(WordNodePtr headOfWordNodePtr, WordNo
 
 
 ConnectionNodePtr createFirstOrder(ListNodePtr headOfMLL, WordNodePtr headOfFLL, ConnectionNodePtr headOfConnections) {
-	printf("in createFirstOrder\n");
 	WordNodePtr tmp1 = headOfFLL;
-	printf("tmp1\n");
-	WordNodePtr tmp2 = NULL;//headOfFLL->nextWordNodePtr;
-	printf("tmp2 \n");
+
 	while(tmp1 != NULL) {
-		tmp2 = tmp1->nextWordNodePtr;
+		WordNodePtr tmp2 = tmp1->nextWordNodePtr;
 		while(tmp2 != NULL) {
 
-			headOfConnections = makeConnectionsOfOrders(headOfConnections, getNodeFromMLL(headOfMLL, tmp1->word), getNodeFromMLL(headOfMLL, tmp2->word), 1);
+			ListNodePtr tmp1ListNode = getNodeFromMLL(headOfMLL, tmp1->word);
+			ListNodePtr tmp2ListNode = getNodeFromMLL(headOfMLL, tmp2->word);
+
+			headOfConnections = makeConnectionsOfOrders(headOfConnections, tmp1ListNode, tmp2ListNode, 1);
+			
 			tmp2 = tmp2->nextWordNodePtr;
 		}
 		tmp1 = tmp1->nextWordNodePtr;
 	} 
-
 	return headOfConnections;
 
 }
@@ -408,11 +392,10 @@ WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL) {
 	WordNodePtr tmp = headOfFLL;
 
 	while( tmp != NULL ) {
-    	headOfFLL = headOfFLL->nextWordNodePtr;
-    	printf("in clear\n");
-    	free(tmp);
+		headOfFLL = headOfFLL->nextWordNodePtr;
+		free(tmp);
 
-    	tmp = headOfFLL;
+		tmp = headOfFLL;
 	}
 	return tmp;
 
