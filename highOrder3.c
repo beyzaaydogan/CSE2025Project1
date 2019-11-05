@@ -2,24 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
+#include <math.h>
 
 
 struct orderNode;
 struct connectionNode;
 
-struct listNode {                                      
+struct listNode {      // For Master Linked List                                
 	char word[80];  
 	struct listNode *nextPtr;
 	struct orderNode *orderPtr;
 }; 
 
-typedef struct listNode ListNode; // synonym for struct listNode
-typedef ListNode* ListNodePtr; // synonym for ListNode*
+typedef struct listNode ListNode; 
+typedef ListNode* ListNodePtr; 
 
-struct orderNode {
+struct orderNode {	
 	ListNodePtr wordPtr;
 	struct orderNode *nextPtr;
 	struct orderNode *connectionPtr;
@@ -40,7 +38,7 @@ struct connectionNode {
 typedef struct connectionNode ConnectionNode;
 typedef ConnectionNode * ConnectionNodePtr;
 
-struct wordNode {
+struct wordNode {  // Created for keeping each files words
 	char word[80];
 	struct wordNode *nextWordNodePtr;
 };
@@ -70,8 +68,6 @@ WordNodePtr createFileLinkedList(WordNodePtr headOfWordNodePtr, char path[]);
 WordNodePtr insertWordNodeToFileLinkedList(WordNodePtr headOfWordNodePtr, WordNodePtr wordNode);
 ConnectionNodePtr createFirstOrder(ListNodePtr headOfMLL, WordNodePtr headOfFLL, ConnectionNodePtr headOfConnections);
 WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL);
-//ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
-//ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
 ConnectionNodePtr createNthOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections, int orderDegree); 
 FrequencyNodePtr createFrequencyLinkedList(FrequencyNodePtr headOfFrequencyNodePtr, char path[]);
 FrequencyNodePtr insertFrequencyNodeToFrequencyLinkedList(FrequencyNodePtr headOfFrequencyNodePtr, FrequencyNodePtr frequencyNode);
@@ -101,13 +97,13 @@ int main(){
 
     	//printf(" Number of sub directories are %d\n", numOfSubDirs);
     	
-    	for( i = 2 ; i < numOfSubDirs ; i++){
+    	for( i = 2 ; i < numOfSubDirs ; i++) {
     		char dirPath[100] = {0};  
     		strcpy(dirPath, path);
     		strcat(dirPath , namelist[i]->d_name );
     		numOfSubFiles = scandir(dirPath, &namelistSub, NULL, alphasort);
     		//	printf("numOfSubFiles %d\n", numOfSubFiles );	
-    		for(j = 2 ; j < numOfSubFiles ; j++){
+    		for(j = 2 ; j < numOfSubFiles ; j++) {
     			char  filePath[100] = {0};
     		//	printf("\n\n\n\n\nI am in %s\n\n", namelistSub[j]->d_name );
     			strcpy(filePath, dirPath);
@@ -121,11 +117,12 @@ int main(){
     			} 
     	
     			char word[40];
-    			while( fscanf(inputTxtFile,"%s", &word[0]) == 1 ){
+    			while( fscanf(inputTxtFile,"%s", &word[0]) == 1 ) {
 					insert(&headPtr, word); // insert item in list
 				}
 		
 				fclose(inputTxtFile); 
+
 				headOfWordNodePtr = createFileLinkedList(headOfWordNodePtr, filePath);	
 				headOfConnections = createFirstOrder(headPtr, headOfWordNodePtr, headOfConnections);	
 				headOfWordNodePtr = clearFileLinkedList(headOfWordNodePtr);
@@ -166,40 +163,62 @@ int main(){
 		printConnections(headOfConnections, 5);
 		printf("\n");
 
-		for(i = 2; i < numOfSubDirs; i++ )
-			if(strcmp(namelist[i]->d_name, "econ")){
-				econHeadOfFrequencyNodePtr = createFrequencyLinkedList(econHeadOfFrequencyNodePtr, "./dataset/econ");
+		for(i = 2; i < numOfSubDirs; i++ ){
+			if(strcmp(namelist[i]->d_name, "econ") == 0){
+				econHeadOfFrequencyNodePtr = createFrequencyLinkedList(econHeadOfFrequencyNodePtr, "./dataset/econ");	
 				econHeadOfFrequencyNodePtr = sortFrequencyNodes(econHeadOfFrequencyNodePtr);
 			}
+		}	
 		for(i = 2; i < numOfSubDirs; i++ )
-			if(strcmp(namelist[i]->d_name, "health")){
+			if(strcmp(namelist[i]->d_name, "health") == 0){
 				healthHeadOfFrequencyNodePtr = createFrequencyLinkedList(healthHeadOfFrequencyNodePtr, "./dataset/health");
 				healthHeadOfFrequencyNodePtr = sortFrequencyNodes(healthHeadOfFrequencyNodePtr);
 			}	
 		for(i = 2; i < numOfSubDirs; i++ ){
 
-			if(strcmp(namelist[i]->d_name, "magazin")){
+			if(strcmp(namelist[i]->d_name, "magazin") == 0 ){
 				magazinHeadOfFrequencyNodePtr = createFrequencyLinkedList(magazinHeadOfFrequencyNodePtr, "./dataset/magazin");
 				magazinHeadOfFrequencyNodePtr = sortFrequencyNodes(magazinHeadOfFrequencyNodePtr);
 			}
 		}
 
-		int i = 0;	
+
+		int k = 0;	
 		printf("\nEcon   -  Health  -  Magazin\n");
 		FrequencyNodePtr econTmp = econHeadOfFrequencyNodePtr;
 		FrequencyNodePtr healthTmp = healthHeadOfFrequencyNodePtr ;
 		FrequencyNodePtr magazinTmp = magazinHeadOfFrequencyNodePtr ;
 
-		while(econTmp != NULL && healthTmp != NULL && magazinTmp != NULL && i != 7) {
+		while(econTmp != NULL && healthTmp != NULL && magazinTmp != NULL && k != 5) {
 			printf("%s %d    %s %d    %s %d\n", econTmp->word, econTmp->count, healthTmp->word, healthTmp->count,
 			magazinTmp->word, magazinTmp->count);
 
 			econTmp = econTmp->nextFrequencyNodePtr;
 			healthTmp = healthTmp->nextFrequencyNodePtr;
 			magazinTmp =  magazinTmp->nextFrequencyNodePtr;
-			i++;
-		}	
-		
+			k++;
+		}
+
+		int m = 0;
+		printf("\nEcon   -      Health  -    Magazin\n");
+		econTmp = econHeadOfFrequencyNodePtr;
+		healthTmp = healthHeadOfFrequencyNodePtr ;
+		magazinTmp = magazinHeadOfFrequencyNodePtr ;
+
+		while(econTmp != NULL && healthTmp != NULL && magazinTmp != NULL && m != 5) {
+			double resultEcon = (econTmp->count)*log((double)3/econTmp->count);
+			double resultHealth = (healthTmp->count)*log((double)2/healthTmp->count);
+			double resultMagazin = (magazinTmp->count)*log((double)1/magazinTmp->count);
+			printf("%s %.2f    %s %.2f    %s %.2f\n", econTmp->word, resultEcon , healthTmp->word, resultHealth,
+			magazinTmp->word, resultMagazin);
+
+			econTmp = econTmp->nextFrequencyNodePtr;
+			healthTmp = healthTmp->nextFrequencyNodePtr;
+			magazinTmp =  magazinTmp->nextFrequencyNodePtr;
+			m++;
+		}
+
+	
 	}
 
 	return 0;
@@ -229,10 +248,10 @@ void insert(ListNodePtr *sPtr, char value[]){
         currentPtr = *sPtr;
 
         // loop to point to the  last(current) node in the list and its previous node       
-        while (currentPtr != NULL) {
+        while (currentPtr != NULL) { 
 
-            previousPtr = currentPtr; // walk to ...               
-            currentPtr = currentPtr->nextPtr; // ... next node 
+            previousPtr = currentPtr;                
+            currentPtr = currentPtr->nextPtr;  
         }                                          
 
         // insert new node at beginning of list
@@ -269,9 +288,7 @@ void printMasterList(ListNodePtr currentPtr){
 		puts("List is empty.\n");
 	} 
 	else { 
-		//puts("The list is:");
-
-      // while not the end of the list
+		// while not the end of the list
 		while (currentPtr != NULL) { 
 			printf("%s --> ", currentPtr->word);
 			currentPtr = currentPtr->nextPtr;   
@@ -292,8 +309,8 @@ ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, L
 		ConnectionNodePtr tmp = headOfConnections;
 		while(tmp != NULL) {
 
-			if((strcmp(tmp->word1->wordPtr->word, word1->word) == 0 && strcmp(tmp->word2->wordPtr->word, word2->word) == 0 ) ||//&& tmp->orderDegree == orderDegree) || 
-				(strcmp(tmp->word1->wordPtr->word, word2->word) == 0 && strcmp(tmp->word2->wordPtr->word, word1->word) == 0 )) {//&& tmp->orderDegree == orderDegree)) {// burdaki orderDegree checkleri eğer iki kelimenin orderlerı aynı ise connectiona eklemememizi sağlıyor aynı iki kelime hem second hem first ise de yazdırılacak. 
+			if((strcmp(tmp->word1->wordPtr->word, word1->word) == 0 && strcmp(tmp->word2->wordPtr->word, word2->word) == 0 ) || 
+				(strcmp(tmp->word1->wordPtr->word, word2->word) == 0 && strcmp(tmp->word2->wordPtr->word, word1->word) == 0 )) { 
 				return headOfConnections;
 		}
 
@@ -386,8 +403,7 @@ ListNodePtr getNodeFromMLL(ListNodePtr headOfMLL, char wordInFile[] ) {
 	ListNodePtr tmp = headOfMLL;
 	while(tmp != NULL) {
 		if(strcmp(wordInFile, tmp -> word) == 0 ) {
-            //printf(" \n Word in file is : %s", wordInFile);
-			return tmp;
+            return tmp;
 		}
 		tmp = tmp -> nextPtr;
 	}
@@ -477,73 +493,6 @@ WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL) {
 }
 
 
-/*
-
-ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections) {
-
-	ListNodePtr tmp = headOfMLL;
-
-	while(tmp != NULL) {
-		OrderNodePtr tmpOrderNode = tmp->orderPtr;
-		while(tmpOrderNode != NULL) {
-			if(tmpOrderNode->bond->orderDegree == 1) {
-				OrderNodePtr tmp2OrderNode = tmpOrderNode->connectionPtr->wordPtr->orderPtr;
-				while(tmp2OrderNode != NULL) {
-					if(tmp2OrderNode->bond->orderDegree == 1) {
-
-						headOfConnections = makeConnectionsOfOrders(headOfConnections, tmp, tmp2OrderNode->connectionPtr->wordPtr, 2);
-
-					}
-					tmp2OrderNode = tmp2OrderNode->nextPtr;
-
-				}
-
-
-			}
-			tmpOrderNode = tmpOrderNode->nextPtr;
-		}
-
-		tmp = tmp->nextPtr;
-	}
-
-	return headOfConnections;
-}
-
-
-
-ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections) {
-
-	ListNodePtr tmp = headOfMLL;
-
-	while(tmp != NULL) {
-		OrderNodePtr tmpOrderNode = tmp->orderPtr;
-		while(tmpOrderNode != NULL) {
-			if(tmpOrderNode->bond->orderDegree == 2) {
-				OrderNodePtr tmp2OrderNode = tmpOrderNode->connectionPtr->wordPtr->orderPtr;
-				while(tmp2OrderNode != NULL) {
-					if(tmp2OrderNode->bond->orderDegree == 1) {
-
-						headOfConnections = makeConnectionsOfOrders(headOfConnections, tmp, tmp2OrderNode->connectionPtr->wordPtr, 3);
-
-					}
-					tmp2OrderNode = tmp2OrderNode->nextPtr;
-
-				}
-
-
-			}
-			tmpOrderNode = tmpOrderNode->nextPtr;
-		}
-
-		tmp = tmp->nextPtr;
-	}
-
-	return headOfConnections;
-}
-
-
-
-*/
 
 
 ConnectionNodePtr createNthOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections, int orderDegree) {
@@ -618,7 +567,7 @@ FrequencyNodePtr insertFrequencyNodeToFrequencyLinkedList(FrequencyNodePtr headO
 	FrequencyNodePtr tmp = headOfFrequencyNodePtr;
 	while(tmp != NULL) {
 		if(strcmp(tmp->word, frequencyNode->word) == 0) {
-			tmp->count++; 
+			(tmp->count)++; 
 			return headOfFrequencyNodePtr;
 		}
 		tmp = tmp->nextFrequencyNodePtr;
@@ -638,6 +587,8 @@ FrequencyNodePtr insertFrequencyNodeToFrequencyLinkedList(FrequencyNodePtr headO
 
 FrequencyNodePtr sortFrequencyNodes(FrequencyNodePtr headOfFrequencyNodePtr) {
 	
+	int countTmp;
+	
 	if(headOfFrequencyNodePtr == NULL) {
 		printf("headOfFrequencyNodePtr is null\n");
 		return headOfFrequencyNodePtr;
@@ -647,25 +598,26 @@ FrequencyNodePtr sortFrequencyNodes(FrequencyNodePtr headOfFrequencyNodePtr) {
 	}
 
 	FrequencyNodePtr tmp1 = headOfFrequencyNodePtr;
-	FrequencyNodePtr tmp2 = headOfFrequencyNodePtr->nextFrequencyNodePtr;
+	FrequencyNodePtr tmp2 = NULL;
 
 	while(tmp1 != NULL) {
 
-		FrequencyNodePtr max = tmp2;
-		
+		tmp2 = tmp1->nextFrequencyNodePtr;
+
 		while(tmp2 != NULL){
 
-			if(max->count < tmp2->count) {
-				max = tmp2;
+			if(tmp1->count < tmp2->count) {
+				char wordTmp[80];
+				
+				countTmp = tmp1->count;
+				tmp1->count = tmp2->count; 
+				tmp2->count = countTmp;
+
+				strcpy(wordTmp, tmp1->word);
+				strcpy(tmp1->word, tmp2->word);
+				strcpy(tmp2->word, wordTmp);
 			}
 			tmp2 = tmp2->nextFrequencyNodePtr; 
-		}
-
-		if(tmp1 < max) {
-			FrequencyNodePtr tmp3 = tmp1;
-			tmp1 = max; 
-			max = tmp3;
-
 		}
 		tmp1 = tmp1->nextFrequencyNodePtr;
 
