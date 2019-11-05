@@ -48,7 +48,14 @@ struct wordNode {
 typedef struct wordNode WordNode;
 typedef WordNode * WordNodePtr;
 
+struct frequencyNode {
+	char word[80];
+	int count;
+	struct frequencyNode *nextFrequencyNodePtr;
+};
 
+typedef struct frequencyNode FrequencyNode;
+typedef FrequencyNode * FrequencyNodePtr; 
 
 
 void insert(ListNodePtr *sPtr, char value[]);
@@ -63,39 +70,45 @@ WordNodePtr createFileLinkedList(WordNodePtr headOfWordNodePtr, char path[]);
 WordNodePtr insertWordNodeToFileLinkedList(WordNodePtr headOfWordNodePtr, WordNodePtr wordNode);
 ConnectionNodePtr createFirstOrder(ListNodePtr headOfMLL, WordNodePtr headOfFLL, ConnectionNodePtr headOfConnections);
 WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL);
-ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
-ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
+//ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
+//ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections);
+ConnectionNodePtr createNthOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections, int orderDegree); 
+FrequencyNodePtr createFrequencyLinkedList(FrequencyNodePtr headOfFrequencyNodePtr, char path[]);
+FrequencyNodePtr insertFrequencyNodeToFrequencyLinkedList(FrequencyNodePtr headOfFrequencyNodePtr, FrequencyNodePtr frequencyNode);
+FrequencyNodePtr sortFrequencyNodes(FrequencyNodePtr headOfFrequencyNodePtr);
 
 int main(){
 
 	ListNodePtr headPtr = NULL; 
 	ConnectionNodePtr headOfConnections = NULL;
 	WordNodePtr headOfWordNodePtr = NULL;
+	FrequencyNodePtr econHeadOfFrequencyNodePtr = NULL;
+	FrequencyNodePtr healthHeadOfFrequencyNodePtr = NULL;
+	FrequencyNodePtr magazinHeadOfFrequencyNodePtr = NULL;
 
 	struct dirent **namelist;
 	struct dirent **namelistSub;
 	FILE *inputTxtFile;
 	int numOfSubDirs, numOfSubFiles, j, i ;
 
-    numOfSubDirs = scandir("./dataset", &namelist, NULL, alphasort); // . yerine /home/beyza/C-workspace/2025Projects gelebilir
-    char path[100] ="./dataset/"; 
+  	numOfSubDirs = scandir("./dataset", &namelist, NULL, alphasort); // . yerine /home/beyza/C-workspace/2025Projects gelebilir
+    char path[30] ="./dataset/"; 
 
     if (numOfSubDirs < 0)
-    	perror("scandir");
-
+    	printf("%s\n","Wrong! dataset folder should be in the same directory with .c file. ");
+ 
     else {
 
     	//printf(" Number of sub directories are %d\n", numOfSubDirs);
     	
     	for( i = 2 ; i < numOfSubDirs ; i++){
-    		char dirPath[100], filePath[100];  
+    		char dirPath[100] = {0};  
     		strcpy(dirPath, path);
     		strcat(dirPath , namelist[i]->d_name );
     		numOfSubFiles = scandir(dirPath, &namelistSub, NULL, alphasort);
-
-
+    		//	printf("numOfSubFiles %d\n", numOfSubFiles );	
     		for(j = 2 ; j < numOfSubFiles ; j++){
-
+    			char  filePath[100] = {0};
     		//	printf("\n\n\n\n\nI am in %s\n\n", namelistSub[j]->d_name );
     			strcpy(filePath, dirPath);
     			strcat(filePath, "/"); 
@@ -106,49 +119,88 @@ int main(){
     				printf("Cannot open file \n"); 
     				exit(0); 
     			} 
-
-
+    	
     			char word[40];
     			while( fscanf(inputTxtFile,"%s", &word[0]) == 1 ){
 					insert(&headPtr, word); // insert item in list
 				}
-
-
-				headOfWordNodePtr = createFileLinkedList(headOfWordNodePtr, filePath);	
-			
-				headOfConnections = createFirstOrder(headPtr, headOfWordNodePtr, headOfConnections);
-			
-			
-				headOfWordNodePtr = clearFileLinkedList(headOfWordNodePtr);
-			
+		
 				fclose(inputTxtFile); 
-
+				headOfWordNodePtr = createFileLinkedList(headOfWordNodePtr, filePath);	
+				headOfConnections = createFirstOrder(headPtr, headOfWordNodePtr, headOfConnections);	
+				headOfWordNodePtr = clearFileLinkedList(headOfWordNodePtr);
+		
 			}
-
 
 		}
 		printf("Master Linked List: ");                 
 		printMasterList(headPtr);
 		printf("\n");
 
+
+		printf("1 st-order term co-occurrence: " );
+		printConnections(headOfConnections, 1);
+		printf("\n");
+
+		headOfConnections = createNthOrder(headPtr, headOfConnections, 2);
+		printf("\n");
+		printf("2 nd-order term co-occurrence: " );
+		printConnections(headOfConnections, 2);
+		printf("\n");
+
+		headOfConnections = createNthOrder(headPtr, headOfConnections, 3);
+		printf("\n");
+		printf("3 rd-order term co-occurrence: " );
+		printConnections(headOfConnections, 3);
+		printf("\n");
+
+		headOfConnections = createNthOrder(headPtr, headOfConnections, 4);
+		printf("\n");
+		printf("4 th-order term co-occurrence: " );
+		printConnections(headOfConnections, 4);
+		printf("\n");
+
+		headOfConnections = createNthOrder(headPtr, headOfConnections, 5);
+		printf("\n");
+		printf("5 th-order term co-occurrence: " );
+		printConnections(headOfConnections, 5);
+		printf("\n");
+
+		for(i = 2; i < numOfSubDirs; i++ )
+			if(strcmp(namelist[i]->d_name, "econ")){
+				econHeadOfFrequencyNodePtr = createFrequencyLinkedList(econHeadOfFrequencyNodePtr, "./dataset/econ");
+				econHeadOfFrequencyNodePtr = sortFrequencyNodes(econHeadOfFrequencyNodePtr);
+			}
+		for(i = 2; i < numOfSubDirs; i++ )
+			if(strcmp(namelist[i]->d_name, "health")){
+				healthHeadOfFrequencyNodePtr = createFrequencyLinkedList(healthHeadOfFrequencyNodePtr, "./dataset/health");
+				healthHeadOfFrequencyNodePtr = sortFrequencyNodes(healthHeadOfFrequencyNodePtr);
+			}	
+		for(i = 2; i < numOfSubDirs; i++ ){
+
+			if(strcmp(namelist[i]->d_name, "magazin")){
+				magazinHeadOfFrequencyNodePtr = createFrequencyLinkedList(magazinHeadOfFrequencyNodePtr, "./dataset/magazin");
+				magazinHeadOfFrequencyNodePtr = sortFrequencyNodes(magazinHeadOfFrequencyNodePtr);
+			}
+		}
+
+		int i = 0;	
+		printf("\nEcon   -  Health  -  Magazin\n");
+		FrequencyNodePtr econTmp = econHeadOfFrequencyNodePtr;
+		FrequencyNodePtr healthTmp = healthHeadOfFrequencyNodePtr ;
+		FrequencyNodePtr magazinTmp = magazinHeadOfFrequencyNodePtr ;
+
+		while(econTmp != NULL && healthTmp != NULL && magazinTmp != NULL && i != 7) {
+			printf("%s %d    %s %d    %s %d\n", econTmp->word, econTmp->count, healthTmp->word, healthTmp->count,
+			magazinTmp->word, magazinTmp->count);
+
+			econTmp = econTmp->nextFrequencyNodePtr;
+			healthTmp = healthTmp->nextFrequencyNodePtr;
+			magazinTmp =  magazinTmp->nextFrequencyNodePtr;
+			i++;
+		}	
+		
 	}
-	printf("1 st -order term co-occurrence: " );
-	printConnections(headOfConnections, 1);
-	printf("\n");
-
-	headOfConnections = createSecondOrder(headPtr, headOfConnections);
-	printf("\n");
-	printf("2 nd -order term co-occurrence: " );
-	printConnections(headOfConnections, 2);
-	printf("\n");
-
-	headOfConnections = createThirdOrder(headPtr, headOfConnections);
-	printf("\n");
-	printf("3 rd -order term co-occurrence: " );
-	printConnections(headOfConnections, 3);
-	printf("\n");
-
-
 
 	return 0;
 }
@@ -347,6 +399,10 @@ ListNodePtr getNodeFromMLL(ListNodePtr headOfMLL, char wordInFile[] ) {
 WordNodePtr createFileLinkedList(WordNodePtr headOfWordNodePtr, char path[]) {
 	FILE *file;
 	file = fopen(path, "r");
+	if (file == NULL) { 
+    		printf("Cannot open file for File Linked List \n"); 
+    		return headOfWordNodePtr;
+    	}
 	char word[40];
 	while( fscanf(file,"%s", &word[0]) == 1 ) {
 		WordNodePtr newWordNode = (WordNodePtr)malloc(sizeof(WordNode));
@@ -416,12 +472,12 @@ WordNodePtr clearFileLinkedList(WordNodePtr headOfFLL) {
 
 		tmp = headOfFLL;
 	}
-	return tmp;
+	return tmp = NULL;
 
 }
 
 
-
+/*
 
 ConnectionNodePtr createSecondOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections) {
 
@@ -484,3 +540,139 @@ ConnectionNodePtr createThirdOrder(ListNodePtr headOfMLL, ConnectionNodePtr head
 
 	return headOfConnections;
 }
+
+
+
+*/
+
+
+ConnectionNodePtr createNthOrder(ListNodePtr headOfMLL, ConnectionNodePtr headOfConnections, int orderDegree) {
+
+	ListNodePtr tmp = headOfMLL;
+
+	while(tmp != NULL) {
+		OrderNodePtr tmpOrderNode = tmp->orderPtr;
+		while(tmpOrderNode != NULL) {
+			if(tmpOrderNode->bond->orderDegree == (orderDegree-1)) {
+				OrderNodePtr tmp2OrderNode = tmpOrderNode->connectionPtr->wordPtr->orderPtr;
+				while(tmp2OrderNode != NULL) {
+					if(tmp2OrderNode->bond->orderDegree == 1) {
+
+						headOfConnections = makeConnectionsOfOrders(headOfConnections, tmp, tmp2OrderNode->connectionPtr->wordPtr, orderDegree);
+
+					}
+					tmp2OrderNode = tmp2OrderNode->nextPtr;
+
+				}
+
+
+			}
+			tmpOrderNode = tmpOrderNode->nextPtr;
+		}
+
+		tmp = tmp->nextPtr;
+	}
+
+	return headOfConnections;
+}
+
+
+
+
+FrequencyNodePtr createFrequencyLinkedList(FrequencyNodePtr headOfFrequencyNodePtr, char path[]) {
+	struct dirent **namelist;
+	int i;
+	int numOfSubFiles = scandir(path, &namelist, NULL, alphasort);
+	FILE *file;
+	for(i = 2; i < numOfSubFiles; i++) {
+		char  filePath[100] = {0};
+    	strcpy(filePath, path);
+    	strcat(filePath, "/"); 
+    	strcat(filePath, namelist[i]->d_name); 
+    	file = fopen(filePath, "r"); 
+    	if (file == NULL) { 
+    		printf("Cannot open file for Frequency Linked List \n"); 
+    		return headOfFrequencyNodePtr;
+    	} 
+		char word[40];
+		while( fscanf(file,"%s", &word[0]) == 1 ) {
+			FrequencyNodePtr newFrequencyNode = (FrequencyNodePtr)malloc(sizeof(FrequencyNode));
+			strcpy(newFrequencyNode->word, word);
+			newFrequencyNode->nextFrequencyNodePtr = NULL;
+			newFrequencyNode->count = 0;
+			headOfFrequencyNodePtr = insertFrequencyNodeToFrequencyLinkedList(headOfFrequencyNodePtr, newFrequencyNode); 
+			}	
+		fclose(file);
+	}
+	return headOfFrequencyNodePtr;
+}
+
+
+
+FrequencyNodePtr insertFrequencyNodeToFrequencyLinkedList(FrequencyNodePtr headOfFrequencyNodePtr, FrequencyNodePtr frequencyNode) {
+	if(headOfFrequencyNodePtr == NULL) {
+		frequencyNode->count = 1;
+		headOfFrequencyNodePtr = frequencyNode;
+		return headOfFrequencyNodePtr;
+	}
+	FrequencyNodePtr tmp = headOfFrequencyNodePtr;
+	while(tmp != NULL) {
+		if(strcmp(tmp->word, frequencyNode->word) == 0) {
+			tmp->count++; 
+			return headOfFrequencyNodePtr;
+		}
+		tmp = tmp->nextFrequencyNodePtr;
+	}
+
+	tmp = headOfFrequencyNodePtr;
+	while(tmp->nextFrequencyNodePtr != NULL ) {
+		tmp = tmp->nextFrequencyNodePtr;
+
+	}
+	frequencyNode->count = 1;
+	tmp->nextFrequencyNodePtr = frequencyNode;
+	return headOfFrequencyNodePtr;
+
+}
+
+
+FrequencyNodePtr sortFrequencyNodes(FrequencyNodePtr headOfFrequencyNodePtr) {
+	
+	if(headOfFrequencyNodePtr == NULL) {
+		printf("headOfFrequencyNodePtr is null\n");
+		return headOfFrequencyNodePtr;
+	}
+	if(headOfFrequencyNodePtr->nextFrequencyNodePtr == NULL ) {
+		return headOfFrequencyNodePtr;
+	}
+
+	FrequencyNodePtr tmp1 = headOfFrequencyNodePtr;
+	FrequencyNodePtr tmp2 = headOfFrequencyNodePtr->nextFrequencyNodePtr;
+
+	while(tmp1 != NULL) {
+
+		FrequencyNodePtr max = tmp2;
+		
+		while(tmp2 != NULL){
+
+			if(max->count < tmp2->count) {
+				max = tmp2;
+			}
+			tmp2 = tmp2->nextFrequencyNodePtr; 
+		}
+
+		if(tmp1 < max) {
+			FrequencyNodePtr tmp3 = tmp1;
+			tmp1 = max; 
+			max = tmp3;
+
+		}
+		tmp1 = tmp1->nextFrequencyNodePtr;
+
+	}
+
+	return headOfFrequencyNodePtr;
+
+}
+
+
