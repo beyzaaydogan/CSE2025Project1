@@ -1,3 +1,8 @@
+// Beyza AYDOĞAN #150117030 
+// Compiled with : gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1) 
+// Usage :  gcc beyza_aydogan.c -o beyza_aydogan -lm 
+
+
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +43,7 @@ struct connectionNode {
 typedef struct connectionNode ConnectionNode;
 typedef ConnectionNode * ConnectionNodePtr;
 
-struct wordNode {  // Created for keeping each files words
+struct wordNode {  
 	char word[80];
 	struct wordNode *nextWordNodePtr;
 };
@@ -56,8 +61,7 @@ typedef struct frequencyNode FrequencyNode;
 typedef FrequencyNode * FrequencyNodePtr; 
 
 
-void insert(ListNodePtr *sPtr, char value[]);
-int isEmpty(ListNodePtr sPtr);
+ListNodePtr insertToMLL(ListNodePtr headPtr, char word[]);
 void printMasterList(ListNodePtr currentPtr);
 ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree);
 ConnectionNodePtr insertConnections(ConnectionNodePtr headOfConnection, ConnectionNodePtr connectionNode);
@@ -87,7 +91,7 @@ int main(){
 	FILE *inputTxtFile;
 	int numOfSubDirs, numOfSubFiles, j, i ;
 
-  	numOfSubDirs = scandir("./dataset", &namelist, NULL, alphasort); // . yerine /home/beyza/C-workspace/2025Projects gelebilir
+  	numOfSubDirs = scandir("./dataset", &namelist, NULL, alphasort); 
     char path[30] ="./dataset/"; 
 
     if (numOfSubDirs < 0)
@@ -95,21 +99,18 @@ int main(){
  
     else {
 
-    	//printf(" Number of sub directories are %d\n", numOfSubDirs);
     	
     	for( i = 2 ; i < numOfSubDirs ; i++) {
     		char dirPath[100] = {0};  
     		strcpy(dirPath, path);
     		strcat(dirPath , namelist[i]->d_name );
     		numOfSubFiles = scandir(dirPath, &namelistSub, NULL, alphasort);
-    		//	printf("numOfSubFiles %d\n", numOfSubFiles );	
+  
     		for(j = 2 ; j < numOfSubFiles ; j++) {
     			char  filePath[100] = {0};
-    		//	printf("\n\n\n\n\nI am in %s\n\n", namelistSub[j]->d_name );
     			strcpy(filePath, dirPath);
     			strcat(filePath, "/"); 
     			strcat(filePath, namelistSub[j]->d_name); 
-    		//	printf("Filepath is --> %s\n\n\n\n", filePath );
     			inputTxtFile = fopen(filePath, "r"); 
     			if (inputTxtFile == NULL) { 
     				printf("Cannot open file \n"); 
@@ -118,7 +119,7 @@ int main(){
     	
     			char word[40];
     			while( fscanf(inputTxtFile,"%s", &word[0]) == 1 ) {
-					insert(&headPtr, word); // insert item in list
+					headPtr = insertToMLL(headPtr, word); // insert item in list
 				}
 		
 				fclose(inputTxtFile); 
@@ -130,9 +131,10 @@ int main(){
 			}
 
 		}
-		printf("Master Linked List: ");                 
-		printMasterList(headPtr);
-		printf("\n");
+
+		/*printf("Master Linked List: ");                 
+		printMasterList(headPtr);   //	To print Master Linked List
+		printf("\n");*/
 
 
 		printf("1 st-order term co-occurrence: " );
@@ -226,76 +228,54 @@ int main(){
 
 
 
-void insert(ListNodePtr *sPtr, char value[]){ 
+ListNodePtr insertToMLL(ListNodePtr headPtr, char word[]) { 
 
-    ListNodePtr newPtr = (ListNodePtr)malloc(sizeof(ListNode)); // create node
-    if (newPtr != NULL) { // is space available
-    	strncpy(newPtr->word, value, 80);
-    	newPtr->word[80 - 1] = '\0';
+    ListNodePtr newPtr = (ListNodePtr)malloc(sizeof(ListNode)); 
+     
+    	strcpy(newPtr->word, word);
+    	newPtr->orderPtr = NULL; 
     	newPtr->nextPtr = NULL;	
 
-    	ListNodePtr previousPtr = NULL;
-    	ListNodePtr currentPtr = *sPtr;
+    	if(headPtr == NULL) {
+    		headPtr = newPtr;
+    		return headPtr;
+    	}
+    	
+    	ListNodePtr currentPtr = headPtr;
 
-    	while(currentPtr != NULL){
+    	while(currentPtr != NULL) {
 
-            if(strcmp(currentPtr->word, value) == 0){//checking if the word we want to instert exists
-            	return;
+            if(strcmp(currentPtr->word, word) == 0) {
+            	return headPtr;
             }
             currentPtr = currentPtr->nextPtr;
         }
 
-        currentPtr = *sPtr;
+        currentPtr = headPtr;
 
-        // loop to point to the  last(current) node in the list and its previous node       
-        while (currentPtr != NULL) { 
+        while(currentPtr->nextPtr != NULL) {
+        	currentPtr = currentPtr->nextPtr;
+        }
+        currentPtr->nextPtr = newPtr;
 
-            previousPtr = currentPtr;                
-            currentPtr = currentPtr->nextPtr;  
-        }                                          
 
-        // insert new node at beginning of list
-        if (previousPtr == NULL) { 
-        	newPtr->nextPtr = *sPtr;
-        	*sPtr = newPtr;
-        } 
         
-        else { // insert new node between previousPtr and currentPtr
-        	previousPtr->nextPtr = newPtr;
-        	newPtr->nextPtr = currentPtr;
+    return headPtr; 
 
-        } 
-    } 
-
-    else {
-    	printf("%s not inserted. No memory available.\n", value);
-    } 
 } 
 
 
 
 
-// return 1 if the list is empty, 0 otherwise
-int isEmpty(ListNodePtr sPtr){ 
-	return sPtr == NULL;
-} 
-
-
-
-void printMasterList(ListNodePtr currentPtr){ 
-   // if list is empty
-	if (isEmpty(currentPtr)) {
-		puts("List is empty.\n");
-	} 
-	else { 
-		// while not the end of the list
+void printMasterList(ListNodePtr currentPtr){ 	
+		
 		while (currentPtr != NULL) { 
 			printf("%s --> ", currentPtr->word);
 			currentPtr = currentPtr->nextPtr;   
 		} 
 
 		puts("NULL\n");
-	} 
+	 
 } 
 
 
@@ -303,7 +283,7 @@ void printMasterList(ListNodePtr currentPtr){
 
 ConnectionNodePtr makeConnectionsOfOrders(ConnectionNodePtr headOfConnections, ListNodePtr word1, ListNodePtr word2, int orderDegree) {
 	if(word1 != NULL && word2 != NULL){
-		if(word1 == word2)//aynı iki kelimeyi bağlama
+		if(word1 == word2)//not to connect same two words
 			return headOfConnections;
 
 		ConnectionNodePtr tmp = headOfConnections;
@@ -626,5 +606,3 @@ FrequencyNodePtr sortFrequencyNodes(FrequencyNodePtr headOfFrequencyNodePtr) {
 	return headOfFrequencyNodePtr;
 
 }
-
-
